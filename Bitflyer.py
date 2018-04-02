@@ -259,7 +259,7 @@ class ExecutionHandler(API_wrapper):
         for order in open_orders.items():
             if order[1]['pair'] == pair:
                 ot = order[1]['order_type']
-                self.delete_order(pair, order[0])
+                self.delete_order(pair, order[0], order_type=ot)
                 # retry to make sure they are all closed
                 msg = "{} was deleted individually".format(order[0])
                 self.logger.debug(msg)
