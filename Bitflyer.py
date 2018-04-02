@@ -252,12 +252,13 @@ class ExecutionHandler(API_wrapper):
         if resp1 == '':
             self.logger.debug("cancelallchildorders sent")
         else:
-            self.logger.debug(resp1)
+            self.logger.warn(resp1)
         # Make sure that all orders were cancelled
         time.sleep(2)
         open_orders = self.get_open_orders()
         for order in open_orders.items():
             if order[1]['pair'] == pair:
+                ot = order[1]['order_type']
                 self.delete_order(pair, order[0])
                 # retry to make sure they are all closed
                 msg = "{} was deleted individually".format(order[0])
@@ -346,7 +347,7 @@ class ExecutionHandler(API_wrapper):
             return None
 
     def delete_order(self, pair, order_id, order_type='limit'):
-        if order_type == self.CONDITION_TYPE_STOP:
+        if order_type == self.CONDITION_TYPE_STOP or order_type == 'stop':
             return self.delete_parent_order(pair, order_id)   #stop
         else:
             return self.delete_child_order(pair, order_id)    #limit, market
@@ -354,8 +355,8 @@ class ExecutionHandler(API_wrapper):
     def test_sell(self):
         pair = "BTCUSD"
         side = "sell"
-        type = "limit"
-        price = 9000
+        type = "stop"
+        price = 6000
         qty = 0.001
         order_id = self.insert_order(pair, side, type, price, qty, 0)
         print(order_id)
