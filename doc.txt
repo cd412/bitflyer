@@ -1,0 +1,13 @@
+Bitflyer
+Api Documentation:	https://lightning.bitflyer.jp/docs?lang=en
+Git Hub wrapper: 	pybitflyer
+			https://github.com/yagays/pybitflyer
+
+!!
+https://bitflyer.com/en-us/ex/UploadDocument
+!!
+
+NOTE:
+When the API gets the order details of a stop loss order it will show the price = 0.
+Make sure don't expect it to give you a reasonable value for price. It doesn't return 
+the trigger_price instead either
