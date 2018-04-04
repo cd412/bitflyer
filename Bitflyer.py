@@ -36,6 +36,7 @@ class ExecutionHandler(API_wrapper):
                  timeout=config.timeout):
         API_wrapper.__init__(self, api_key, api_secret, timeout)
         self.logger = logging.getLogger(logger)
+        self.logger.setLevel(logging.DEBUG)
         self.symbol_map = constants.symbol_map["Bitflyer"]
         self.symbol_map_reversed = {v: k for k, v in self.symbol_map.items()}
         self.active_symbols = self.get_active_symbols()
@@ -259,7 +260,7 @@ class ExecutionHandler(API_wrapper):
         for order in open_orders.items():
             if order[1]['pair'] == pair:
                 ot = order[1]['order_type']
-                self.delete_order(pair, order[0], order_type=ot)
+                self.delete_order(pair, order[0])
                 # retry to make sure they are all closed
                 msg = "{} was deleted individually".format(order[0])
                 self.logger.debug(msg)
@@ -346,11 +347,8 @@ class ExecutionHandler(API_wrapper):
         except:
             return None
 
-    def delete_order(self, pair, order_id, order_type='limit'):
-        if order_type == self.CONDITION_TYPE_STOP or order_type == 'stop':
-            return self.delete_parent_order(pair, order_id)   #stop
-        else:
-            return self.delete_child_order(pair, order_id)    #limit, market
+    def delete_order(self, pair, order_id):
+        return self.delete_child_order(pair, order_id)    #limit, market, stop
 
     def test_sell(self):
         pair = "BTCUSD"
@@ -370,7 +368,9 @@ if __name__ == "__main__":
     o = t1.test_sell()
     time.sleep(2)
     print("open orders:", t1.get_open_orders())
-    t1.clear_open_orders("BTCUSD")
+    #t1.clear_open_orders("BTCUSD")
+    print(t1.delete_order("BTCUSD", o))
+    time.sleep(2)
     print("open orders:", t1.get_open_orders())
 
 
