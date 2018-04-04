@@ -207,13 +207,13 @@ class ExecutionHandler(API_wrapper):
         return output
 
 
-    def get_closed_orders(self):
+    def get_canceled_or_closed_orders(self):
         # A closed order may have either been cancelled, partially filled or completely filled
         all_orders = self.get_all_orders()
         output = {}
         for order_id, details in all_orders.items():
             if details["volume"] != 0 or details["state"] == self.ORDER_STATE_CANCELED:
-                if details['average_price'] != 0:
+                if details['average_price'] == 0:
                     d_price = details['price']
                 else:
                     d_price = details['average_price']
@@ -227,6 +227,32 @@ class ExecutionHandler(API_wrapper):
                      'fee': details['fee'],
                      'order_type': details['order_type']}
                 output[order_id] = d
+        return output
+
+    def get_close_times(self):
+        output = {}
+        for code in self.markets:
+            resp = self.getexecutions(product_code=code)
+            if resp != []:
+                # When there are open orders for a product_code
+                for order in resp:
+                    id = order["child_order_acceptance_id"]
+                    output[id] = {"close_time": self.convert_timestamp(order["exec_date"]),
+                                    #"pair": self._get_pair(code), 
+                                    #side": order["side"].lower(),
+                                    #"price": order["price"],
+                                    #"volume_executed": order["size"],
+                                    #"cost": order["price"] * order["size"],
+                                    #"fee": order["commission"]
+                                    }
+        return output
+
+
+    def get_closed_orders(self):
+        output = self.get_canceled_or_closed_orders()
+        close_times = self.get_close_times()
+        for id, close_time in close_times.items():
+            output[id]["close_time"] = close_time["close_time"]
         return output
 
     def cancelchildorder_raise(self, **params):
@@ -353,9 +379,9 @@ class ExecutionHandler(API_wrapper):
     def test_sell(self):
         pair = "BTCUSD"
         side = "sell"
-        type = "stop"
-        price = 6000
-        qty = 0.001
+        type = "limit"
+        price = 8000
+        qty = 0.002
         order_id = self.insert_order(pair, side, type, price, qty, 0)
         print(order_id)
         return order_id
@@ -364,13 +390,14 @@ class ExecutionHandler(API_wrapper):
 if __name__ == "__main__":
     t1 = ExecutionHandler()
     print("markets:", t1.markets)
-    print("open orders:", t1.get_open_orders())
-    o = t1.test_sell()
+    #print("open orders:", t1.get_open_orders())
+    #o = t1.test_sell()
+    #time.sleep(2)
+    #print("open orders:", t1.get_open_orders())
+    t1.clear_open_orders("BTCUSD")
+    #print(t1.delete_order("BTCUSD", o))
     time.sleep(2)
-    print("open orders:", t1.get_open_orders())
-    #t1.clear_open_orders("BTCUSD")
-    print(t1.delete_order("BTCUSD", o))
-    time.sleep(2)
-    print("open orders:", t1.get_open_orders())
+    #print(t1.getchildorders(product_code="BTC_USD", child_order_state="CANCELED"))
+    print("closed orders:", t1.get_closed_orders())
 
 
